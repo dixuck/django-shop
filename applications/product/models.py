@@ -1,7 +1,8 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from slugify import slugify
+from django.db.models.signals import pre_save
 
+from .signals import get_pre_save
 
 class Product(models.Model):
     slug = models.SlugField(primary_key=True, blank=True)
@@ -14,13 +15,21 @@ class Product(models.Model):
     category = models.ForeignKey('category.Category', on_delete=models.CASCADE, related_name='products')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    image = models.ImageField(upload_to='product_images')
-
-    class Meta:
-        verbose_name = 'Product'
-        verbose_name_plural = 'Products'
 
     def __str__(self) -> str:
         return self.title
     
+    class Meta:
+        verbose_name = 'Product'
+        verbose_name_plural = 'Products'
     
+
+class ProductImage(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='product-images')
+
+    def __str__(self) -> str:
+        return f'{self.pk} to {self.product.title}'
+
+
+pre_save.connect(get_pre_save, sender=Product)
